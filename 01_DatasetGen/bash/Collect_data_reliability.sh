@@ -18,5 +18,5 @@ array_size=${#input_args[@]}
 echo ${DIR}
 
 for ((i=0; i<$array_size; i++)); do
-    sbatch --output=$DIR/cnf${input_args[$((i))]}_lyr${start_layer}_FI_stdo_%A_%a.log --error=$DIR/cnf${input_args[$((i))]}_lyr${start_layer}_FI_stde_%A_%a.log ${global_PWD}/SC_Fault_injections/Anomaly-detection-and-Classification-in-SC2/01_DatasetGen/bash/crbq/Neurons_FI.sh ${input_args[$((i))]} $start_layer $stop_layer ${DIR}
+    bash ${global_PWD}/SC_Fault_injections/Anomaly-detection-and-Classification-in-SC2/01_DatasetGen/bash/Neuron_FI.sh ${input_args[$((i))]} $start_layer $stop_layer ${DIR}
 done

@@ -22,7 +22,9 @@ echo ${CUDA_VISIBLE_DEVICES}
 job_id=0
 
 target_config="$1"
-DIR="$2"
+start_layer="$2"
+stop_layer="$3"
+DIR="$4"
 
 
 Sim_dir=${global_PWD}/${DIR}/cnf${target_config}_JOBID${job_id}_W

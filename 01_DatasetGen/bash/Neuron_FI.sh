@@ -16,12 +16,15 @@ echo ${CUDA_VISIBLE_DEVICES}
 job_id=0
 
 target_config="$1"
-DIR="$2"
+start_layer="$2"
+stop_layer="$3"
+DIR="$4"
 
 
 Sim_dir=${global_PWD}/${DIR}/cnf${target_config}_JOBID${job_id}_W
 mkdir -p ${Sim_dir}
 
+cd ${Sim_dir}
 
 cp ${global_PWD}/SC_Fault_injections/configs/ilsvrc2012/supervised_compression/ghnd-bq/resnet50-bq${target_config}ch_from_resnet50.yaml ${Sim_dir}
 cp ${global_PWD}/SC_Fault_injections/configs/ilsvrc2012/supervised_compression/ghnd-bq/Fault_descriptor.yaml ${Sim_dir}
@@ -35,7 +38,7 @@ sed -i "s/block_fault_rate_steps: [0-9.]\+/block_fault_rate_steps: 5/" ${Sim_dir
 sed -i "s/neuron_fault_rate_delta: [0-9.]\+/neuron_fault_rate_delta: 0.02/" ${Sim_dir}/Fault_descriptor.yaml
 sed -i "s/neuron_fault_rate_steps: [0-9.]\+/neuron_fault_rate_steps: 5/" ${Sim_dir}/Fault_descriptor.yaml
 
-python ${global_PWD}/SC_Fault_injections/Anomaly-detection-and-Classification-in-SC2/01_DatasetGen/image_classification_FI.py -student_only \
+python ${global_PWD}/SC_Fault_injections/Anomaly-detection-and-Classification-in-SC2/01_DatasetGen/image_classification_FI.py \
         --config ${Sim_dir}/resnet50-bq${target_config}ch_from_resnet50.yaml\
         --device cuda\
         --fsim_config ${Sim_dir}/Fault_descriptor.yaml > ${global_PWD}/${DIR}/cnf${target_config}_stdo.log 2> ${global_PWD}/${DIR}/cnf${target_config}_stde.log

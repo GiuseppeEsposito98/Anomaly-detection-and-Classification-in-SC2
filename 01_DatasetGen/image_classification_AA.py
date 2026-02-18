@@ -37,7 +37,7 @@ def get_argparser():
     parser.add_argument('--device', default='cuda', help='device')
     parser.add_argument('--log', help='log file path')
     parser.add_argument('--seed', type=int, help='seed in random number generator')
-    parser.add_argument('-aa', '--adv_attack', action='store_true', help='Yaml file path fsim config')
+    parser.add_argument('--adv_attack', action='store_true', help='Yaml file path fsim config')
     return parser
 
 
@@ -69,10 +69,11 @@ def evaluate(model_wo_ddp, data_loader, device,
     epsilon = 0.0003
     for img_id, (image, target) in enumerate(metric_logger.log_every(data_loader, log_freq, header)):
         logger.info(image)
-        image.requires_grad = True
         
         if isinstance(image, torch.Tensor):
             image = image.to(device, non_blocking=True)
+
+        adv_image = image.detach().clone().requires_grad_(True)
         n=0
         adv_image = image
         golden = None
@@ -85,8 +86,8 @@ def evaluate(model_wo_ddp, data_loader, device,
             n+=1
             int_feature = model.bottleneck_layer.encoder(adv_image)
             
-            
             aa_path = os.path.join(save_dir, f"{i}_{img_id}.pt")
+
             if i in iter_to_save:
                 torch.save(int_feature, aa_path)
             aa_path_label = os.path.join(save_dir, f"L_{i}_{img_id}.pt")
@@ -95,6 +96,7 @@ def evaluate(model_wo_ddp, data_loader, device,
                 torch.save(output, aa_path_label)
             if i == 0:
                 golden = output
+                
             mse=F.mse_loss(torch.zeros_like(int_feature),int_feature)
 
             model.zero_grad()
@@ -166,7 +168,7 @@ def main(args):
     data_subset=Subset(test_data_loader.dataset, index_dataset)
     dataloader = DataLoader(data_subset,batch_size=test_batch_size, shuffle=test_shuffle,pin_memory=True,num_workers=test_num_workers)
 
-    if args.aa:
+    if args.adv_attack:
         evaluate(student_model, dataloader, device,
                 log_freq=log_freq, title='[Student: {}]'.format(student_model_config['name']), header='Golden')
 
