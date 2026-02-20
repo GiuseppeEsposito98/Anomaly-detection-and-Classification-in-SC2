@@ -1,26 +1,30 @@
 # AI-Based Detection and Classification of Adversarial and Fault-Induced Threat in Split Computing
 
 This repository implements the methodology developed to distinguish *adversarial attacks* from *hardware‑induced fault corruptions* in **Split Computing (SC)** systems.  
-In SC architectures, DNNs are partitioned between an edge device and the cloud, exposing them to both adversarial perturbations and hardware faults. These two error sources can produce misprediction patterns that a classifier is capable of effectively differentiate as shown in [Figure 1](#fig-confusion-1) and [Figure 2](#fig-confusion-2). When the corruption is detected and later classified ad-hoc countermeasures can be adopted to protect the system.
+In SC architectures, DNNs are partitioned between an edge device and the cloud, exposing them to both adversarial perturbations and hardware faults. These two error sources can produce misprediction patterns that a classifier is capable of effectively differentiate as shown in [Figure 1](#fig-confusion-1) and [Figure 2](#fig-confusion-2). 
 
+
+### <a name="fig-confusion-1"></a>
+<p align="center">
+  <img src="./images/Split_Configuration_1.png" alt="Split Computing configuration 1" width="32%">
+  <img src="./images/Split_Configuration_2.png" alt="Split Computing configuration 2" width="26.5%">
+  <img src="./images/Split_Configuration_3.png" alt="Split Computing configuration 3" width="26.5%">
+</p>
+
+### <a name="fig-confusion-2"></a>
+<p align="center">
+  <img src="./images/Split_Configuration_6.png" alt="Split Computing configuration 6" width="32%">
+  <img src="./images/Split_Configuration_9.png" alt="Split Computing configuration 9" width="26.5%">
+  <img src="./images/Split_Configuration_12.png" alt="Split Computing configuration 12" width="26.5%">
+</p>
+
+As shown in [Figure 3](#fig-3) the classifier is meant to be deployed on the server-side and such that it can be executed in parallel to the Tail model. 
+<p align="center">
+  <img src="./images/flow.png" alt="Real Deployment scenario" width="100%">
+</p>
+
+When the corruption is detected and later classified ad-hoc countermeasures can be adopted to protect the system.
 We propose a unified framework that generates adversarial examples, simulates hardware faults on split models, and trains classifiers to determine the underlying cause of a misprediction—without modifying the DNN or SC execution pipeline.
-
-
-### <a name="fig-confusion-1"></a>Figure 1
-<p align="center">
-  <img src="images/Split_Computing_1.png" alt="Split Computing configuration 1" width="32%">
-  <img src="images/Split_Computing_2.png" alt="Split Computing configuration 2" width="32%">
-  <img src="images/Split_Computing_3.png" alt="Split Computing configuration 3" width="32%">
-</p>
-
-### <a name="fig-confusion-2"></a>Figure 2
-<p align="center">
-  <img src="images/Split_Computing_6.png" alt="Split Computing configuration 6" width="32%">
-  <img src="images/Split_Computing_9.png" alt="Split Computing configuration 9" width="32%">
-  <img src="images/Split_Computing_12.png" alt="Split Computing configuration 12" width="32%">
-</p>
-
----
 
 ## Requirements
 
