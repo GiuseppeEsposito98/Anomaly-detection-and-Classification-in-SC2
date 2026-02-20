@@ -6,6 +6,7 @@ img_id = 0
 fault_id = 0
 
 import torch
+import torchvision
 from torch.backends import cudnn
 from torchdistill.common import yaml_util
 from torchdistill.common.constant import def_logger
@@ -61,7 +62,7 @@ def evaluate(model_wo_ddp, data_loader, device,
     logger.info(list_index_to_inj)
 
     for image, target in metric_logger.log_every(data_loader, log_freq, header):
-        logger.info(image)
+        # logger.info(image)
         if header == "Golden" or im in list_index_to_inj:
             logger.info("IMG = " + str(im))
             if isinstance(image, torch.Tensor):
@@ -83,7 +84,7 @@ def evaluate(model_wo_ddp, data_loader, device,
             metric_logger.synchronize_between_processes()
             top1_accuracy = metric_logger.acc1.global_avg
             top5_accuracy = metric_logger.acc5.global_avg
-            logger.info(' * Acc@1 {:.4f}\tAcc@5 {:.4f}\n'.format(top1_accuracy, top5_accuracy))
+            # logger.info(' * Acc@1 {:.4f}\tAcc@5 {:.4f}\n'.format(top1_accuracy, top5_accuracy))
             if analyzable and model_wo_ddp.activated_analysis:
                 model_wo_ddp.summarize()
         
@@ -93,7 +94,8 @@ def evaluate(model_wo_ddp, data_loader, device,
 
 def save_encoder_golden_output(module, input, output):
     global img_id
-    save_dir = os.path.join("hook_encoder_output", "golden")
+    cwd=os.getcwd() 
+    save_dir = os.path.join(f"{cwd}/hook_encoder_output", "golden")
     os.makedirs(save_dir, exist_ok=True)
     
     # Save the output tensor
@@ -105,10 +107,11 @@ def save_encoder_golden_output(module, input, output):
 def save_encoder_faulty_output(module, input, output):
     global img_id
     global fault_id
-    golden_path = os.path.join("hook_encoder_output", "golden", f"{img_id}.pt")
+    cwd=os.getcwd() 
+    golden_path = os.path.join(f"{cwd}/hook_encoder_output", "golden", f"{img_id}.pt")
     
     # Ensure faulty directory exists
-    faulty_dir = os.path.join("hook_encoder_output", "faulty")
+    faulty_dir = os.path.join(f"{cwd}/hook_encoder_output", "faulty")
     os.makedirs(faulty_dir, exist_ok=True)
     faulty_path = os.path.join(faulty_dir, f"{fault_id}_{img_id}.pt")
 
@@ -147,7 +150,7 @@ def main(args):
     test_config = config['test']
     test_data_loader_config = test_config['test_data_loader']
     test_data_loader = util.build_data_loader(dataset_dict[test_data_loader_config['dataset_id']],
-                                              test_data_loader_config)
+                                              test_data_loader_config, distributed = False)
     log_freq = test_config.get('log_freq', 1000)
         
 
@@ -164,70 +167,70 @@ def main(args):
     data_subset=Subset(test_data_loader.dataset, index_dataset)
     dataloader = DataLoader(data_subset,batch_size=test_batch_size, shuffle=test_shuffle,pin_memory=True,num_workers=test_num_workers)
 
-    if args.fsim_config:
-        fsim_config_descriptor = yaml_util.load_yaml_file(os.path.expanduser(args.fsim_config))
-        conf_fault_dict=fsim_config_descriptor['fault_info']['neurons']
-        cwd=os.getcwd() 
-        full_log_path=cwd
+    # if args.fsim_config:
+    fsim_config_descriptor = yaml_util.load_yaml_file(os.path.expanduser(args.fsim_config))
+    conf_fault_dict=fsim_config_descriptor['fault_info']['neurons']
+    cwd=os.getcwd() 
+    full_log_path=cwd
 
-        # 1. create the fault injection setup
-        FI_setup=FI_manager(full_log_path,chpt_file_name='ckpt_FI.json',fault_report_name='fsim_report.csv')
+    # 1. create the fault injection setup
+    FI_setup=FI_manager(full_log_path,chpt_file_name='ckpt_FI.json',fault_report_name='fsim_report.csv')
 
-        # 2. Run a fault free scenario to generate the golden model
-        hook_golden_handle = student_model.bottleneck_layer.encoder.register_forward_hook(save_encoder_golden_output)
-        FI_setup.open_golden_results("Golden_results")
-        evaluate(student_model, dataloader, device,
-                log_freq=log_freq, title='[Student: {}]'.format(student_model_config['name']), header='Golden', fsim_enabled=True, Fsim_setup=FI_setup) 
-        FI_setup.close_golden_results()
-        hook_golden_handle.remove()
+    # 2. Run a fault free scenario to generate the golden model
+    hook_golden_handle = student_model.bottleneck_layer.encoder.register_forward_hook(save_encoder_golden_output)
+    FI_setup.open_golden_results("Golden_results")
+    evaluate(student_model, dataloader, device,
+            log_freq=log_freq, title='[Student: {}]'.format(student_model_config['name']), header='Golden', fsim_enabled=True, Fsim_setup=FI_setup) 
+    FI_setup.close_golden_results()
+    hook_golden_handle.remove()
+    img_id = 0
+
+    # 3. Prepare the Model for fault injections
+    FI_setup.FI_framework.create_fault_injection_model(device,student_model,
+                                        batch_size=test_batch_size,
+                                        input_shape=[3,224,224],
+                                        layer_types=[torch.nn.Conv2d,torch.nn.Linear],Neurons=True)
+    
+    # 4. generate the fault list
+    logging.getLogger('pytorchfi').disabled = True
+    
+    FI_setup.generate_fault_list(flist_mode='neurons',
+                                f_list_file='fault_list.csv',
+                                layers=conf_fault_dict['layers'],
+                                trials=conf_fault_dict['trials'], 
+                                size_tail_y=conf_fault_dict['size_tail_y'], 
+                                size_tail_x=conf_fault_dict['size_tail_x'],
+                                block_fault_rate_delta=conf_fault_dict['block_fault_rate_delta'],
+                                block_fault_rate_steps=conf_fault_dict['block_fault_rate_steps'],
+                                neuron_fault_rate_delta=conf_fault_dict['neuron_fault_rate_delta'],
+                                neuron_fault_rate_steps=conf_fault_dict['neuron_fault_rate_steps'])     
+    
+    FI_setup.load_check_point()
+
+
+    # 5. Execute the fault injection campaign
+    for fault,k in FI_setup.iter_fault_list():
+        fault_id = k
         img_id = 0
+        FI_setup.FI_framework.bit_flip_err_neuron(fault)
+        FI_setup.open_faulty_results(f"F_{k}_results")
 
-        # 3. Prepare the Model for fault injections
-        FI_setup.FI_framework.create_fault_injection_model(device,student_model,
-                                            batch_size=test_batch_size,
-                                            input_shape=[3,224,224],
-                                            layer_types=[torch.nn.Conv2d,torch.nn.Linear],Neurons=True)
+        hook_faulty_handle = FI_setup.FI_framework.faulty_model.bottleneck_layer.encoder.register_forward_hook(save_encoder_faulty_output)
+        try:
+            evaluate(FI_setup.FI_framework.faulty_model, dataloader, device,
+                log_freq=log_freq, title='[Student: {}]'.format(student_model_config['name']), header='FSIM', fsim_enabled=True,Fsim_setup=FI_setup)        
         
-        # 4. generate the fault list
-        logging.getLogger('pytorchfi').disabled = True
-        
-        FI_setup.generate_fault_list(flist_mode='neurons',
-                                    f_list_file='fault_list.csv',
-                                    layers=conf_fault_dict['layers'],
-                                    trials=conf_fault_dict['trials'], 
-                                    size_tail_y=conf_fault_dict['size_tail_y'], 
-                                    size_tail_x=conf_fault_dict['size_tail_x'],
-                                    block_fault_rate_delta=conf_fault_dict['block_fault_rate_delta'],
-                                    block_fault_rate_steps=conf_fault_dict['block_fault_rate_steps'],
-                                    neuron_fault_rate_delta=conf_fault_dict['neuron_fault_rate_delta'],
-                                    neuron_fault_rate_steps=conf_fault_dict['neuron_fault_rate_steps'])     
-        
-        FI_setup.load_check_point()
+        except OSError as Oserr:
+            msg=f"Oserror: {Oserr}"
+            logger.info(msg)
 
-
-        # 5. Execute the fault injection campaign
-        for fault,k in FI_setup.iter_fault_list():
-            fault_id = k
-            img_id = 0
-            FI_setup.FI_framework.bit_flip_err_neuron(fault)
-            FI_setup.open_faulty_results(f"F_{k}_results")
-
-            hook_faulty_handle = FI_setup.FI_framework.faulty_model.bottleneck_layer.encoder.register_forward_hook(save_encoder_faulty_output)
-            try:
-                evaluate(FI_setup.FI_framework.faulty_model, dataloader, device,
-                    log_freq=log_freq, title='[Student: {}]'.format(student_model_config['name']), header='FSIM', fsim_enabled=True,Fsim_setup=FI_setup)        
-            
-            except OSError as Oserr:
-                msg=f"Oserror: {Oserr}"
-                logger.info(msg)
-
-            except Exception as Error:
-                msg=f"Exception error: {Error}"
-                logger.info(msg)
-            hook_faulty_handle.remove()
-            FI_setup.parse_results()
-            #break
-        FI_setup.terminate_fsim()
+        except Exception as Error:
+            msg=f"Exception error: {Error}"
+            logger.info(msg)
+        hook_faulty_handle.remove()
+        FI_setup.parse_results()
+        # break
+    FI_setup.terminate_fsim()
 
 
 if __name__ == '__main__':

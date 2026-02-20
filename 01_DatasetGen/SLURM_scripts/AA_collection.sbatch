@@ -36,8 +36,7 @@ cd ${Sim_dir}
 
 python ${global_PWD}/SC_Fault_injections/Anomaly-detection-and-Classification-in-SC2/01_DatasetGen/image_classification_AA.py \
         --config ${Sim_dir}/resnet50-bq${target_config}ch_from_resnet50.yaml\
-        --device cuda \
-        -aa > ${global_PWD}/${DIR}/cnf${target_config}_stdo.log 2> ${global_PWD}/${DIR}/cnf${target_config}_stde.log
+        --device cuda > ${global_PWD}/${DIR}/cnf${target_config}_stdo.log 2> ${global_PWD}/${DIR}/cnf${target_config}_stde.log
 
 echo
 echo "All done. Checking results:"
