@@ -19,7 +19,7 @@ DIR="$1"
 Sim_dir=${global_PWD}/${DIR}/
 
 
-python ${global_PWD}/SC_Fault_injections/Anomaly-detection-and-Classification-in-SC2/02_DatasetProcessing/split_normalize_golden.py \
+python ${global_PWD}/SC_Fault_injections/Anomaly-detection-and-Classification-in-SC2/02_DatasetProcessing/sample_normalize_golden.py \
         --dataset_dir ${Sim_dir}
 
 python ${global_PWD}/SC_Fault_injections/Anomaly-detection-and-Classification-in-SC2/02_DatasetProcessing/sample.py \
