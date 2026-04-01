@@ -1,22 +1,17 @@
 # AI-Based Detection and Classification of Adversarial and Fault-Induced Threat in Split Computing
 
 This repository implements the methodology developed to distinguish *adversarial attacks* from *hardware‑induced fault corruptions* in **Split Computing (SC)** systems.  
-In SC architectures, DNNs are partitioned between an edge device and the cloud, exposing them to both adversarial perturbations and hardware faults. These two error sources can produce misprediction patterns that a classifier is capable of effectively differentiate as shown in [Figure 1](#fig-confusion-1) and [Figure 2](#fig-confusion-2). 
+In SC architectures, DNNs are partitioned between an edge device and the cloud, exposing them to both adversarial perturbations and hardware faults. These two error sources can produce misprediction patterns that our classifier is capable of effectively differentiate with an F1-score an Operations overhead shown in the following table. 
 
 
-### <a name="fig-confusion-1"></a>
-<p align="center">
-  <img src="./images/Split_Configuration_1.png" alt="Split Computing configuration 1" width="32%">
-  <img src="./images/Split_Configuration_2.png" alt="Split Computing configuration 2" width="26.5%">
-  <img src="./images/Split_Configuration_3.png" alt="Split Computing configuration 3" width="26.5%">
-</p>
-
-### <a name="fig-confusion-2"></a>
-<p align="center">
-  <img src="./images/Split_Configuration_6.png" alt="Split Computing configuration 6" width="32%">
-  <img src="./images/Split_Configuration_9.png" alt="Split Computing configuration 9" width="26.5%">
-  <img src="./images/Split_Configuration_12.png" alt="Split Computing configuration 12" width="26.5%">
-</p>
+| SC configuration | OPs overhead (This work) | F1‑score (This work) |
+|------------------|---------------------------|------------------------|
+| CRBQ 1  | 26.59% | 90.04% |
+| CRBQ 2  | 26.74% | 96.66% |
+| CRBQ 3  | 31.07% | 97.84% |
+| CRBQ 6  | 33.33% | 96.09% |
+| CRBQ 9  | 34.32% | 98.51% |
+| CRBQ 12 | 34.52% | 98.65% |
 
 As shown in [Figure 3](#fig-3) the classifier is meant to be deployed on the server-side and such that it can be executed in parallel to the Tail model. 
 <p align="center">
