@@ -17,3 +17,4 @@ pip install optuna
 pip install pynvml
 pip install tonic
 pip install pandas
+pip install pathlib
