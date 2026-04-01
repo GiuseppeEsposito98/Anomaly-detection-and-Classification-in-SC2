@@ -104,13 +104,13 @@ You will find the collected feature maps in the folder SIM_data
 
 Then you can run the code for Feature maps postprocessing:
 ```bash
-<postprocessed_data_folder>
+bash SC_Fault_injections/Anomaly-detection-and-Classification-in-SC2/02_DatasetProcessing/exe.sh SIM_data
 ```
 
-Once you have the data saved in <postprocessed_data_folder> you can run the classifier training:
+Once you have the processed the datayou can run the classifier training:
 ```bash
 cd ./SC_Fault_injections/Anomaly-detection-and-Classification-in-SC2/03_AnomalyDetectionAndClassification
-bash run_configuration.sh <postprocessed_data_folder>
+bash run_configuration.sh SIM_data
 ```
 
 ## Citation
